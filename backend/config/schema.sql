@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
   login_id VARCHAR(50) UNIQUE,
+  profile_picture VARCHAR(255),
   role ENUM('admin', 'hr', 'employee', 'payroll') DEFAULT 'employee',
   department VARCHAR(100),
   status ENUM('active', 'inactive') DEFAULT 'active',

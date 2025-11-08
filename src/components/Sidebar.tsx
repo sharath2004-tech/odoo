@@ -72,10 +72,19 @@ export const Sidebar = () => {
       >
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">
-            uhooo
-          </h1>
-          <p className="text-gray-500 text-xs mt-1">& ehee</p>
+          <div className="flex items-center gap-3">
+            <img 
+              src="/images/workzen-logo.svg" 
+              alt="WorkZen Logo" 
+              className="w-12 h-12"
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                WorkZen
+              </h1>
+              <p className="text-gray-500 text-xs mt-0.5">HR Management System</p>
+            </div>
+          </div>
         </div>
 
         {/* User Info */}

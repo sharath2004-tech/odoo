@@ -1,0 +1,19 @@
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Triquetra symbol (three interlocking arcs) -->
+  <g transform="translate(250, 170)">
+    <!-- Dark gray/charcoal interlocking symbol -->
+    <path d="M 0,-60 A 50,50 0 0,1 43.3,-21.65 A 50,50 0 0,1 43.3,21.65 A 50,50 0 0,1 0,60 A 50,50 0 0,0 -43.3,21.65 A 50,50 0 0,0 -43.3,-21.65 A 50,50 0 0,0 0,-60 Z" 
+          fill="none" stroke="#3C4858" stroke-width="18" stroke-linejoin="round"/>
+    
+    <path d="M 43.3,-21.65 A 50,50 0 0,1 86.6,0 A 50,50 0 0,1 43.3,21.65 A 50,50 0 0,0 43.3,-21.65 Z M 43.3,21.65 A 50,50 0 0,1 0,60 A 50,50 0 0,1 -43.3,21.65 A 50,50 0 0,0 43.3,21.65 Z M -43.3,-21.65 A 50,50 0 0,1 -86.6,0 A 50,50 0 0,1 -43.3,21.65 A 50,50 0 0,0 -43.3,-21.65 Z"
+          fill="none" stroke="#3C4858" stroke-width="18" stroke-linejoin="round"/>
+    
+    <!-- Colored dots -->
+    <circle cx="-60" cy="-30" r="14" fill="#4DB8AC"/>  <!-- Cyan dot (top-left) -->
+    <circle cx="60" cy="-30" r="14" fill="#F5B841"/>   <!-- Yellow dot (top-right) -->
+    <circle cx="0" cy="65" r="14" fill="#E74C5C"/>     <!-- Red dot (bottom) -->
+  </g>
+  
+  <!-- workzen text in lowercase -->
+  <text x="250" y="400" font-family="Arial, sans-serif" font-size="72" font-weight="400" fill="#2C3E50" text-anchor="middle">workzen</text>
+</svg>

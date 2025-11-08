@@ -56,7 +56,7 @@ export const generatePassword = () => {
 };
 
 // Send welcome email to new employee
-export const sendWelcomeEmail = async (recipientEmail, fullName, password, adminEmail) => {
+export const sendWelcomeEmail = async (recipientEmail, fullName, password, loginId, adminEmail) => {
   try {
     const transporter = await createTransporter();
     
@@ -144,6 +144,10 @@ export const sendWelcomeEmail = async (recipientEmail, fullName, password, admin
             
             <div class="credentials-box">
               <h3 style="margin-top: 0; color: #06b6d4;">Your Login Credentials</h3>
+              <div class="credential-item">
+                <span class="credential-label">Login ID:</span><br>
+                <span class="credential-value">${loginId}</span>
+              </div>
               <div class="credential-item">
                 <span class="credential-label">Email:</span><br>
                 <span class="credential-value">${recipientEmail}</span>
@@ -246,6 +250,7 @@ export const sendWelcomeEmail = async (recipientEmail, fullName, password, admin
             <div class="info-box">
               <h3 style="margin-top: 0; color: #06b6d4;">Employee Details</h3>
               <p><strong>Name:</strong> ${fullName}</p>
+              <p><strong>Login ID:</strong> ${loginId}</p>
               <p><strong>Email:</strong> ${recipientEmail}</p>
               <p><strong>Status:</strong> Account active, welcome email sent</p>
             </div>

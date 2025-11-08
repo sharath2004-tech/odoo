@@ -60,8 +60,15 @@ export const LoginPage = () => {
       >
         <div className="bg-white p-10 rounded-lg shadow-lg border border-gray-200">
           <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <img 
+                src="/images/workzen-logo.svg" 
+                alt="WorkZen Logo" 
+                className="w-16 h-16"
+              />
+            </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-            <p className="text-gray-600">Sign in to continue</p>
+            <p className="text-gray-600">Sign in to continue to WorkZen</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

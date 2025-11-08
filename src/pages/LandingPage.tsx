@@ -20,11 +20,16 @@ export const LandingPage = () => {
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <motion.div
-            className="text-2xl font-bold text-gray-900"
+            className="flex items-center gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            WorkZen
+            <img 
+              src="/images/workzen-logo.svg" 
+              alt="WorkZen Logo" 
+              className="w-10 h-10"
+            />
+            <span className="text-2xl font-bold text-gray-900">WorkZen</span>
           </motion.div>
           <div className="flex gap-4">
             <button 

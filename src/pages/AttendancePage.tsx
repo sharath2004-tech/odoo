@@ -19,12 +19,24 @@ interface AttendanceRecord {
   notes: string | null;
 }
 
+interface UserData {
+  id: number;
+  role: string;
+  full_name: string;
+  email: string;
+}
+
 const AttendancePage = () => {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterDept, setFilterDept] = useState('');
   const [todayAttendance, setTodayAttendance] = useState<{checkIn: string | null, checkOut: string | null}>({checkIn: null, checkOut: null});
+  const [monthlyStats, setMonthlyStats] = useState({
+    daysPresent: 0,
+    leavesTaken: 0,
+    totalWorkingDays: 0
+  });
 
   // Fetch today's attendance for current user
   useEffect(() => {
@@ -55,18 +67,95 @@ const AttendancePage = () => {
     fetchTodayAttendance();
   }, []);
 
+  // Fetch monthly attendance statistics for current user
+  useEffect(() => {
+    const fetchMonthlyStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        // Get current month's first and last day
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        // Calculate total working days (excluding weekends)
+        let workingDays = 0;
+        for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+          const dayOfWeek = d.getDay();
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday or Saturday
+            workingDays++;
+          }
+        }
+        
+        // Fetch attendance records for current month
+        const startDate = firstDay.toISOString().split('T')[0];
+        const endDate = lastDay.toISOString().split('T')[0];
+        
+        const response = await fetch(`http://localhost:5000/api/attendance?startDate=${startDate}&endDate=${endDate}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          const myRecords = data.data.filter((a: AttendanceRecord) => a.employee_id === Number(user.id));
+          const daysPresent = myRecords.filter((a: AttendanceRecord) => a.status === 'present').length;
+          const leavesTaken = myRecords.filter((a: AttendanceRecord) => 
+            a.status === 'leave' || a.status === 'half_day'
+          ).length;
+          
+          setMonthlyStats({
+            daysPresent,
+            leavesTaken,
+            totalWorkingDays: workingDays
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch monthly stats:', error);
+      }
+    };
+    fetchMonthlyStats();
+  }, []);
+
   // Fetch attendance records
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
         setLoading(true);
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
         const params: { date?: string; department?: string } = {};
         if (selectedDate) params.date = selectedDate;
         if (filterDept) params.department = filterDept;
 
         const response = await attendanceAPI.getAll(params);
         if (response.data.success) {
-          setAttendanceData(response.data.data);
+          let filteredData = response.data.data;
+          
+          // If user is employee role, filter to show only other employees (exclude admin, hr, payroll)
+          if (user.role === 'employee') {
+            // Fetch user details to get roles
+            const token = localStorage.getItem('token');
+            const usersResponse = await fetch('http://localhost:5000/api/users', {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const usersData = await usersResponse.json();
+            
+            if (usersData.success) {
+              // Create a map of employee_id to role
+              const employeeRoles = new Map<number, string>();
+              usersData.data.forEach((u: UserData) => {
+                employeeRoles.set(u.id, u.role);
+              });
+              
+              // Filter to only show employees with 'employee' role
+              filteredData = filteredData.filter((record: AttendanceRecord) => {
+                const role = employeeRoles.get(record.employee_id);
+                return role === 'employee';
+              });
+            }
+          }
+          
+          setAttendanceData(filteredData);
         }
       } catch (error) {
         console.error('Failed to fetch attendance:', error);
@@ -218,6 +307,69 @@ const AttendancePage = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Monthly Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <motion.div
+          className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-green-100 mb-1">Days Present</p>
+              <p className="text-4xl font-bold text-white">{monthlyStats.daysPresent}</p>
+              <p className="text-xs text-green-100 mt-1">This month</p>
+            </div>
+            <div className="bg-white bg-opacity-20 p-3 rounded-full">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-orange-100 mb-1">Leaves Taken</p>
+              <p className="text-4xl font-bold text-white">{monthlyStats.leavesTaken}</p>
+              <p className="text-xs text-orange-100 mt-1">This month</p>
+            </div>
+            <div className="bg-white bg-opacity-20 p-3 rounded-full">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-blue-100 mb-1">Total Working Days</p>
+              <p className="text-4xl font-bold text-white">{monthlyStats.totalWorkingDays}</p>
+              <p className="text-xs text-blue-100 mt-1">This month</p>
+            </div>
+            <div className="bg-white bg-opacity-20 p-3 rounded-full">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Filters */}
