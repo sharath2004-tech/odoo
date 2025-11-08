@@ -1,9 +1,9 @@
 import bcrypt from 'bcryptjs';
 import express from 'express';
 import { body, validationResult } from 'express-validator';
+import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { pool } from '../config/database.js';
 import { authenticate, authorize } from '../middleware/auth.js';
