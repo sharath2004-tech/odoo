@@ -1,0 +1,2 @@
+# This directory stores uploaded certificate files
+# Files in this directory are served via /uploads/certificates/ route
