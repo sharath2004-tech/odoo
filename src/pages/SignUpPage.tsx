@@ -76,7 +76,7 @@ export const SignUpPage = () => {
               />
             </div>
             <h2 className="text-4xl font-bold text-gray-900 mb-2">Create Account</h2>
-            <p className="text-gray-600">Join WorkZen and simplify your HR operations</p>
+            <p className="text-gray-600">Join WorkZen as an Admin, HR Manager, or Payroll Officer</p>
           </div>
 
           {/* Restriction Message for Employees */}
@@ -148,10 +148,16 @@ export const SignUpPage = () => {
                   className="w-full bg-white border border-gray-300 rounded-lg px-10 py-3 text-gray-900 focus:outline-none focus:border-gray-500 focus:ring-2 focus:ring-gray-200/20 cursor-pointer appearance-none"
                 >
                   <option value="admin">Administrator</option>
+                  <option value="hr">HR Manager</option>
+                  <option value="payroll">Payroll Officer</option>
                 </select>
                 <Briefcase className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
               </div>
-              <p className="text-gray-500 text-xs mt-2">Employee accounts are created by administrators through User Management.</p>
+              <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-blue-800 text-xs">
+                  <strong>ℹ️ Note:</strong> Regular employee accounts must be created by administrators through the User Management page.
+                </p>
+              </div>
             </div>
 
             {/* Password */}

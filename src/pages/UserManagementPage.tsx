@@ -108,18 +108,13 @@ export const UserManagementPage = () => {
     try {
       const token = localStorage.getItem('token');
       
-      // Prepare data - don't send password if empty (auto-generate)
-      const userData: any = {
+      // Prepare data - password will be auto-generated on backend
+      const userData = {
         fullName: formData.fullName,
         email: formData.email,
         role: formData.role,
         department: formData.department
       };
-      
-      // Only include password if it's not empty
-      if (formData.password && formData.password.trim() !== '') {
-        userData.password = formData.password;
-      }
       
       const response = await fetch('http://localhost:5000/api/users', {
         method: 'POST',
@@ -500,21 +495,9 @@ export const UserManagementPage = () => {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  Password 
-                  <span className="text-gray-500 text-xs ml-2">(Leave empty to auto-generate and email to user)</span>
-                </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={e => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900"
-                  placeholder="Leave empty for auto-generation"
-                  minLength={6}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  💡 For employees: Leave empty to send welcome email with auto-generated password
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>🔐 Password:</strong> An auto-generated password will be created and sent to the user's email address.
                 </p>
               </div>
               <div>

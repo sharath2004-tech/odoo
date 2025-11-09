@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Clock, DollarSign, TrendingUp, Users } from 'lucide-react';
+import { Clock, IndianRupee, TrendingUp, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout';
@@ -34,7 +34,7 @@ const AdminDashboard = () => {
   const metricsDisplay = [
     { icon: Users, label: 'Total Employees', value: metrics.totalEmployees.toString(), change: '', trend: 'up' },
     { icon: Clock, label: 'Attendance Rate', value: `${metrics.attendanceRate}%`, change: '', trend: 'up' },
-    { icon: DollarSign, label: 'Monthly Payroll', value: `₹${(metrics.monthlyPayroll / 1000).toFixed(1)}K`, change: '', trend: 'up' },
+    { icon: IndianRupee, label: 'Monthly Payroll', value: `₹${(metrics.monthlyPayroll / 1000).toFixed(1)}K`, change: '', trend: 'up' },
     { icon: TrendingUp, label: 'Departments', value: metrics.totalDepartments.toString(), change: '', trend: 'up' },
   ];
 
@@ -72,6 +72,7 @@ const AdminDashboard = () => {
                     </p>
                   )}
                 </div>
+
                 <Icon className="w-8 h-8 text-gray-700" />
               </div>
             </motion.div>
@@ -94,7 +95,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: 'Add Employee', icon: Users, path: '/employees' },
-            { label: 'Generate Payroll', icon: DollarSign, path: '/payroll' },
+            { label: 'Generate Payroll', icon: IndianRupee , path: '/payroll' },
             { label: 'Mark Attendance', icon: Clock, path: '/attendance' },
             { label: 'View Reports', icon: TrendingUp, path: '/reports' },
           ].map((action, i) => {

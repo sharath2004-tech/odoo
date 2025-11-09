@@ -74,12 +74,21 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const getCheckInStatus = (employeeId: number) => {
+  const getEmployeeStatus = (employeeId: number) => {
     const att = attendance.get(employeeId);
-    if (!att || att.status === 'absent') {
-      return { status: 'Not Checked In', isCheckedIn: false };
+    
+    // Check if employee is on leave
+    if (att && att.status === 'leave') {
+      return { status: 'On Leave', type: 'leave', color: 'blue' };
     }
-    return { status: 'Checked In', isCheckedIn: true };
+    
+    // Check if employee is present (checked in)
+    if (att && att.status === 'present') {
+      return { status: 'Present', type: 'present', color: 'green' };
+    }
+    
+    // Employee is absent (not checked in and not on leave)
+    return { status: 'Absent', type: 'absent', color: 'yellow' };
   };
 
   const handleEmployeeClick = (employee: Employee) => {
@@ -121,8 +130,24 @@ const EmployeeDashboard = () => {
     <DashboardLayout title="Employee Dashboard">
       <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between">
-          <div><h2 className="text-2xl font-bold text-gray-900">All Employees</h2><p className="text-gray-600 mt-1">{employees.length} total employees  {attendance.size} checked in today</p></div>
-          <div className="flex gap-4"><div className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-500" /><span className="text-gray-700 font-medium">Checked In</span></div><div className="flex items-center gap-2"><XCircle className="w-5 h-5 text-red-500" /><span className="text-gray-700 font-medium">Not Checked In</span></div></div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">All Employees</h2>
+            <p className="text-gray-600 mt-1">{employees.length} total employees • {attendance.size} checked in today</p>
+          </div>
+          <div className="flex gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full" />
+              <span className="text-gray-700 font-medium text-sm">Present in office</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-base">✈️</span>
+              <span className="text-gray-700 font-medium text-sm">On leave</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+              <span className="text-gray-700 font-medium text-sm">Absent</span>
+            </div>
+          </div>
         </div>
       </div>
       {employees.length === 0 ? (
@@ -130,7 +155,7 @@ const EmployeeDashboard = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {employees.map((employee, index) => {
-            const checkStatus = getCheckInStatus(employee.id);
+            const empStatus = getEmployeeStatus(employee.id);
             
             return (
               <motion.div
@@ -141,11 +166,15 @@ const EmployeeDashboard = () => {
                 onClick={() => handleEmployeeClick(employee)}
                 className="bg-white rounded-lg p-4 shadow-md border-2 border-gray-300 relative hover:shadow-lg hover:border-blue-500 transition-all cursor-pointer"
               >
-                <div className="absolute top-3 right-3">
-                  {checkStatus.isCheckedIn ? (
-                    <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md" title="Checked In" />
+                <div className="absolute top-3 right-3" title={empStatus.status}>
+                  {empStatus.type === 'present' ? (
+                    <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-md" />
+                  ) : empStatus.type === 'leave' ? (
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <span className="text-lg">✈️</span>
+                    </div>
                   ) : (
-                    <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-md" title="Not Checked In" />
+                    <div className="w-4 h-4 bg-yellow-500 rounded-full border-2 border-white shadow-md" />
                   )}
                 </div>
 
@@ -226,20 +255,40 @@ const EmployeeDashboard = () => {
                         {selectedEmployee.full_name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <div className={`absolute bottom-1 right-1 w-6 h-6 ${
-                      getCheckInStatus(selectedEmployee.id).isCheckedIn ? 'bg-green-500' : 'bg-red-500'
-                    } rounded-full border-4 border-white shadow-md`} />
+                    {(() => {
+                      const status = getEmployeeStatus(selectedEmployee.id);
+                      return status.type === 'leave' ? (
+                        <div className="absolute bottom-0 right-0 text-xl">✈️</div>
+                      ) : (
+                        <div className={`absolute bottom-1 right-1 w-6 h-6 ${
+                          status.type === 'present' ? 'bg-green-500' : 'bg-yellow-500'
+                        } rounded-full border-4 border-white shadow-md`} />
+                      );
+                    })()}
                   </div>
                   <div>
                     <h2 className="text-3xl font-bold text-gray-900">{selectedEmployee.full_name}</h2>
                     <p className="text-gray-600 text-lg mt-1">{selectedEmployee.employee_code}</p>
-                    <div className={`inline-block mt-2 px-4 py-1.5 rounded-lg text-sm font-semibold border-2 ${
-                      getCheckInStatus(selectedEmployee.id).isCheckedIn 
-                        ? 'bg-green-50 text-green-700 border-green-500' 
-                        : 'bg-red-50 text-red-700 border-red-500'
-                    }`}>
-                      {getCheckInStatus(selectedEmployee.id).isCheckedIn ? '✓ Checked In' : '✗ Not Checked In'}
-                    </div>
+                    {(() => {
+                      const status = getEmployeeStatus(selectedEmployee.id);
+                      return (
+                        <div className={`inline-flex items-center gap-2 mt-2 px-4 py-1.5 rounded-lg text-sm font-semibold border-2 ${
+                          status.type === 'present'
+                            ? 'bg-green-50 text-green-700 border-green-500' 
+                            : status.type === 'leave'
+                            ? 'bg-blue-50 text-blue-700 border-blue-500'
+                            : 'bg-yellow-50 text-yellow-700 border-yellow-500'
+                        }`}>
+                          {status.type === 'present' ? (
+                            <>🟢 {status.status}</>
+                          ) : status.type === 'leave' ? (
+                            <>✈️ {status.status}</>
+                          ) : (
+                            <>🟡 {status.status}</>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

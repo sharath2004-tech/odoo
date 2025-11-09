@@ -91,46 +91,140 @@ router.post('/', verifyToken, checkRole('admin', 'hr'), async (req, res) => {
 });
 
 // Update employee
-router.put('/:id', verifyToken, checkRole('admin', 'hr', 'payroll'), async (req, res) => {
+router.put('/:id', verifyToken, async (req, res) => {
   try {
-    const { departmentId, position, phone, address, salary, status, wageType, workingDaysPerWeek, breakTimeHours } = req.body;
+    const userRole = req.user.role;
+    const userId = req.user.id;
+    const employeeId = req.params.id;
+    
+    const { 
+      departmentId, position, phone, address, salary, status, 
+      date_of_birth, gender, marital_status, nationality,
+      bank_name, account_number, ifsc_code, pan_number, uan_number
+    } = req.body;
+
+    // Check if employee is updating their own profile
+    const [employeeRecord] = await pool.query(
+      'SELECT user_id FROM employees WHERE id = ?',
+      [employeeId]
+    );
+
+    if (employeeRecord.length === 0) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    const isOwnProfile = employeeRecord[0].user_id === userId;
+
+    // Define fields that can be updated by role
+    const restrictedFields = ['departmentId', 'position', 'salary', 'status'];
+    const personalInfoFields = ['phone', 'address', 'date_of_birth', 'gender', 'marital_status', 'nationality', 'bank_name', 'account_number', 'ifsc_code', 'pan_number', 'uan_number'];
+
+    // If user is employee role, they can only update their own profile's personal info
+    if (userRole === 'employee') {
+      if (!isOwnProfile) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Access denied. You can only update your own profile.' 
+        });
+      }
+
+      // Check if employee is trying to update restricted fields
+      const attemptingRestrictedUpdate = restrictedFields.some(field => {
+        if (field === 'departmentId') return departmentId !== undefined;
+        if (field === 'position') return position !== undefined;
+        if (field === 'salary') return salary !== undefined;
+        if (field === 'status') return status !== undefined;
+        return false;
+      });
+
+      if (attemptingRestrictedUpdate) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Access denied. Employees can only update personal information fields.' 
+        });
+      }
+    } else if (!['admin', 'hr', 'payroll'].includes(userRole)) {
+      // Other roles must have admin, hr, or payroll privileges
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. This action requires one of these roles: admin, hr, payroll.' 
+      });
+    }
 
     // Build update query dynamically based on provided fields
     const updates = [];
     const params = [];
 
-    if (departmentId !== undefined) {
+    // Restricted fields (only admin/hr/payroll can update)
+    if (departmentId !== undefined && ['admin', 'hr', 'payroll'].includes(userRole)) {
       updates.push('department_id = ?');
       params.push(departmentId);
     }
-    if (position !== undefined) {
+    if (position !== undefined && ['admin', 'hr', 'payroll'].includes(userRole)) {
       updates.push('position = ?');
       params.push(position);
     }
-    if (phone !== undefined) {
-      updates.push('phone = ?');
-      params.push(phone);
-    }
-    if (address !== undefined) {
-      updates.push('address = ?');
-      params.push(address);
-    }
-    if (salary !== undefined) {
+    if (salary !== undefined && ['admin', 'hr', 'payroll'].includes(userRole)) {
       updates.push('salary = ?');
       params.push(salary);
     }
-    if (status !== undefined) {
+    if (status !== undefined && ['admin', 'hr', 'payroll'].includes(userRole)) {
       updates.push('status = ?');
       params.push(status);
     }
-    // Note: wage_type, working_days_per_week, break_time_hours columns don't exist in current schema
-    // These fields are ignored for now
+
+    // Personal information fields (all roles can update if it's their own profile)
+    if (phone !== undefined) {
+      updates.push('phone = ?');
+      params.push(phone || null);
+    }
+    if (address !== undefined) {
+      updates.push('address = ?');
+      params.push(address || null);
+    }
+    if (date_of_birth !== undefined) {
+      updates.push('date_of_birth = ?');
+      // Convert empty string to null for DATE column
+      params.push(date_of_birth === '' ? null : date_of_birth);
+    }
+    if (gender !== undefined) {
+      updates.push('gender = ?');
+      params.push(gender || null);
+    }
+    if (marital_status !== undefined) {
+      updates.push('marital_status = ?');
+      params.push(marital_status || null);
+    }
+    if (nationality !== undefined) {
+      updates.push('nationality = ?');
+      params.push(nationality || null);
+    }
+    if (bank_name !== undefined) {
+      updates.push('bank_name = ?');
+      params.push(bank_name || null);
+    }
+    if (account_number !== undefined) {
+      updates.push('account_number = ?');
+      params.push(account_number || null);
+    }
+    if (ifsc_code !== undefined) {
+      updates.push('ifsc_code = ?');
+      params.push(ifsc_code || null);
+    }
+    if (pan_number !== undefined) {
+      updates.push('pan_number = ?');
+      params.push(pan_number || null);
+    }
+    if (uan_number !== undefined) {
+      updates.push('uan_number = ?');
+      params.push(uan_number || null);
+    }
 
     if (updates.length === 0) {
       return res.status(400).json({ success: false, message: 'No fields to update' });
     }
 
-    params.push(req.params.id);
+    params.push(employeeId);
 
     await pool.query(`
       UPDATE employees 
@@ -139,6 +233,10 @@ router.put('/:id', verifyToken, checkRole('admin', 'hr', 'payroll'), async (req,
     `, params);
 
     // Log activity
+    const activityDetails = userRole === 'employee' 
+      ? `Updated own profile personal information`
+      : `Updated employee #${employeeId}${salary !== undefined ? ` - New salary: ₹${salary}` : ''}`;
+
     await pool.query(
       `INSERT INTO activity_logs (user_id, user_name, user_role, action, module, details)
       VALUES (?, ?, ?, ?, ?, ?)`,
@@ -148,7 +246,7 @@ router.put('/:id', verifyToken, checkRole('admin', 'hr', 'payroll'), async (req,
         req.user.role,
         'UPDATE',
         'Employee',
-        `Updated employee #${req.params.id}${salary !== undefined ? ` - New salary: ₹${salary}` : ''}`
+        activityDetails
       ]
     );
 

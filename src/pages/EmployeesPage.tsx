@@ -100,7 +100,7 @@ const EmployeesPage = () => {
     try {
       const token = localStorage.getItem('token');
       
-      // First create user account
+      // First create user account (password will be auto-generated)
       const userResponse = await fetch('http://localhost:5000/api/users', {
         method: 'POST',
         headers: {
@@ -110,7 +110,6 @@ const EmployeesPage = () => {
         body: JSON.stringify({
           fullName: formData.fullName,
           email: formData.email,
-          password: formData.password,
           role: formData.role,
           department: formData.department,
         }),
@@ -254,17 +253,10 @@ const EmployeesPage = () => {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Password *
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                    />
+                  <div className="col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-800">
+                      <strong>🔐 Password:</strong> An auto-generated password will be created and sent to the employee's email address.
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

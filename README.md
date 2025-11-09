@@ -698,6 +698,22 @@ For support and queries:
 
 ---
 
+## 🎥 Video Tutorial
+
+Watch a comprehensive UI walkthrough and feature demonstration:
+
+[![WorkZen HRMS Demo](https://img.shields.io/badge/Watch-Video_Demo-red?style=for-the-badge&logo=google-drive)](https://drive.google.com/file/d/1JRHZn8uuPFO9iptGUhbJMm8nOSvOyafc/view?usp=sharing)
+
+📹 **[Click here to watch the UI explanation video](https://drive.google.com/file/d/1JRHZn8uuPFO9iptGUhbJMm8nOSvOyafc/view?usp=sharing)**
+
+This video covers:
+- Complete UI/UX walkthrough
+- Feature demonstrations
+- User role workflows
+- System navigation guide
+
+---
+
 <div align="center">
   <strong>Built with ❤️ using React, TypeScript, Node.js, and MySQL</strong>
   
