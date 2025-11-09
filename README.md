@@ -692,7 +692,7 @@ This project is proprietary software. All rights reserved.
 ## 📧 Support
 
 For support and queries:
-- Email: support@workzen.com
+- Email: 2004sharath@gmail.com
 - Documentation: [Read the docs](#)
 - Issues: [GitHub Issues](https://github.com/sharath2004-tech/odoo/issues)
 
