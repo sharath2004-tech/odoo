@@ -15,13 +15,18 @@ export const DashboardLayout = ({ children, title = 'Dashboard' }: DashboardLayo
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar />
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={handleToggleSidebar} />
 
       {/* Main Content */}
-      <div className="lg:ml-64">
+      <div className={`transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         {/* Top Navigation */}
         <nav className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
           <div className="px-6 py-4 flex justify-between items-center">

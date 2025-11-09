@@ -43,22 +43,19 @@ const AttendancePage = () => {
     const fetchTodayAttendance = async () => {
       try {
         const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const today = new Date().toISOString().split('T')[0];
         
-        const response = await fetch(`http://localhost:5000/api/attendance?date=${today}`, {
+        // Use the new /today endpoint
+        const response = await fetch('http://localhost:5000/api/attendance/today', {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await response.json();
         
-        if (data.success) {
-          const myAttendance = data.data.find((a: AttendanceRecord) => a.employee_id === Number(user.id));
-          if (myAttendance) {
-            setTodayAttendance({
-              checkIn: myAttendance.check_in,
-              checkOut: myAttendance.check_out
-            });
-          }
+        if (data.success && data.data) {
+          setTodayAttendance({
+            checkIn: data.data.check_in,
+            checkOut: data.data.check_out
+          });
+          console.log('📅 Today\'s attendance status:', data.data);
         }
       } catch (error) {
         console.error('Failed to fetch today\'s attendance:', error);
@@ -166,68 +163,98 @@ const AttendancePage = () => {
     fetchAttendance();
   }, [selectedDate, filterDept]);
 
+  const refreshTodayAttendance = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/attendance/today', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setTodayAttendance({
+          checkIn: data.data.check_in,
+          checkOut: data.data.check_out
+        });
+      }
+    } catch (error) {
+      console.error('Failed to refresh attendance:', error);
+    }
+  };
+
   const handleCheckIn = async () => {
     try {
       const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const now = new Date();
-      const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
-      const date = now.toISOString().split('T')[0];
       
-      const response = await fetch('http://localhost:5000/api/attendance', {
+      const response = await fetch('http://localhost:5000/api/attendance/checkin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          employeeId: user.id,
-          date: date,
-          checkIn: time,
-          status: 'present'
-        })
+        }
       });
       
       const data = await response.json();
       if (data.success) {
-        setTodayAttendance({ ...todayAttendance, checkIn: time });
-        alert('Check-in successful!');
+        setTodayAttendance({ 
+          checkIn: data.data.check_in, 
+          checkOut: null 
+        });
+        alert(`✅ Check-in successful at ${formatTime(data.data.check_in)}!`);
+        console.log('✅ Checked in:', data.data);
+        
+        // Refresh the attendance list to show updated status
+        const params: { date?: string; department?: string } = {};
+        if (selectedDate) params.date = selectedDate;
+        if (filterDept) params.department = filterDept;
+        const attResponse = await attendanceAPI.getAll(params);
+        if (attResponse.data.success) {
+          setAttendanceData(attResponse.data.data);
+        }
       } else {
-        alert('Failed to check in: ' + data.message);
+        alert('⚠️ ' + data.message);
       }
     } catch (error) {
       console.error('Check-in error:', error);
-      alert('Error checking in. Please try again.');
+      alert('❌ Error checking in. Please try again.');
     }
   };
 
   const handleCheckOut = async () => {
     try {
       const token = localStorage.getItem('token');
-      const now = new Date();
-      const time = now.toTimeString().split(' ')[0];
       
       const response = await fetch('http://localhost:5000/api/attendance/checkout', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          checkOut: time
-        })
+        }
       });
       
       const data = await response.json();
       if (data.success) {
-        setTodayAttendance({ ...todayAttendance, checkOut: time });
-        alert('Check-out successful!');
+        setTodayAttendance({ 
+          ...todayAttendance, 
+          checkOut: data.data.check_out 
+        });
+        alert(`✅ Check-out successful at ${formatTime(data.data.check_out)}!`);
+        console.log('✅ Checked out:', data.data);
+        
+        // Refresh the attendance list to show updated status
+        const params: { date?: string; department?: string } = {};
+        if (selectedDate) params.date = selectedDate;
+        if (filterDept) params.department = filterDept;
+        const attResponse = await attendanceAPI.getAll(params);
+        if (attResponse.data.success) {
+          setAttendanceData(attResponse.data.data);
+        }
       } else {
-        alert('Failed to check out: ' + data.message);
+        alert('⚠️ ' + data.message);
       }
     } catch (error) {
       console.error('Check-out error:', error);
-      alert('Error checking out. Please try again.');
+      alert('❌ Error checking out. Please try again.');
     }
   };
 
@@ -312,62 +339,56 @@ const AttendancePage = () => {
       {/* Monthly Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <motion.div
-          className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 shadow-lg"
+          className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-green-100 mb-1">Days Present</p>
-              <p className="text-4xl font-bold text-white">{monthlyStats.daysPresent}</p>
-              <p className="text-xs text-green-100 mt-1">This month</p>
+              <p className="text-gray-600 text-sm">Days Present</p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-2">{monthlyStats.daysPresent}</h3>
+              <p className="text-xs text-gray-500 mt-1">This month</p>
             </div>
-            <div className="bg-white bg-opacity-20 p-3 rounded-full">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
+            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
         </motion.div>
 
         <motion.div
-          className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 shadow-lg"
+          className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-orange-100 mb-1">Leaves Taken</p>
-              <p className="text-4xl font-bold text-white">{monthlyStats.leavesTaken}</p>
-              <p className="text-xs text-orange-100 mt-1">This month</p>
+              <p className="text-gray-600 text-sm">Leaves Taken</p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-2">{monthlyStats.leavesTaken}</h3>
+              <p className="text-xs text-gray-500 mt-1">This month</p>
             </div>
-            <div className="bg-white bg-opacity-20 p-3 rounded-full">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
+            <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
         </motion.div>
 
         <motion.div
-          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 shadow-lg"
+          className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-blue-100 mb-1">Total Working Days</p>
-              <p className="text-4xl font-bold text-white">{monthlyStats.totalWorkingDays}</p>
-              <p className="text-xs text-blue-100 mt-1">This month</p>
+              <p className="text-gray-600 text-sm">Total Working Days</p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-2">{monthlyStats.totalWorkingDays}</h3>
+              <p className="text-xs text-gray-500 mt-1">This month</p>
             </div>
-            <div className="bg-white bg-opacity-20 p-3 rounded-full">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
+            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
         </motion.div>
       </div>

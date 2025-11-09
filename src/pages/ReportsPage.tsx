@@ -35,11 +35,28 @@ const ReportsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [salaryReport, setSalaryReport] = useState<SalaryReport | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  const months = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' },
+  ];
 
   const isAdmin = user?.role === 'admin';
   const canViewAllReports = ['admin', 'hr', 'payroll'].includes(user?.role || '');
+  const canGenerateReports = ['admin', 'payroll'].includes(user?.role || '');
 
   useEffect(() => {
     fetchEmployees();
@@ -62,34 +79,48 @@ const ReportsPage = () => {
     try {
       const token = localStorage.getItem('token');
       
-      // If employee role, only show their own record
-      if (user?.role === 'employee') {
-        const response = await fetch('http://localhost:5000/api/employees', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        if (data.success) {
-          // Filter to only current user's employee record
-          const currentUserEmployee = data.data.filter((emp: Employee) => emp.id === user.id);
-          setEmployees(currentUserEmployee);
-          setFilteredEmployees(currentUserEmployee);
-          if (currentUserEmployee.length > 0) {
-            setSelectedEmployee(currentUserEmployee[0].id);
+      const response = await fetch('http://localhost:5000/api/employees', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        // Map the employee data to match expected interface
+        const mappedEmployees = data.data.map((emp: any) => ({
+          id: emp.id.toString(),
+          fullName: emp.full_name,
+          designation: emp.position || 'N/A',
+          dateOfJoining: emp.join_date,
+        }));
+
+        // If employee role, only show their own record
+        if (user?.role === 'employee') {
+          // Get the employee record for the logged-in user by matching user ID through a separate call
+          const userResponse = await fetch(`http://localhost:5000/api/users/${user.id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const userData = await userResponse.json();
+          
+          if (userData.success) {
+            // Find employee record that matches this user
+            const currentUserEmployees = mappedEmployees.filter((emp: any) => 
+              emp.fullName === userData.data.fullName || emp.fullName === user.fullName
+            );
+            
+            setEmployees(currentUserEmployees);
+            setFilteredEmployees(currentUserEmployees);
+            if (currentUserEmployees.length > 0) {
+              setSelectedEmployee(currentUserEmployees[0].id);
+            }
           }
-        }
-      } else {
-        // Admin, HR, Payroll can see all employees
-        const response = await fetch('http://localhost:5000/api/employees', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        if (data.success) {
-          setEmployees(data.data);
-          setFilteredEmployees(data.data);
+        } else {
+          // Admin, HR, Payroll can see all employees
+          setEmployees(mappedEmployees);
+          setFilteredEmployees(mappedEmployees);
         }
       }
     } catch (error) {
@@ -98,6 +129,12 @@ const ReportsPage = () => {
   };
 
   const fetchSalaryReport = async () => {
+    // Check access permissions
+    if (!canGenerateReports) {
+      alert('Access Denied: Only Admin and Payroll Officers can generate salary reports.');
+      return;
+    }
+
     if (!selectedEmployee) {
       alert('Please select an employee');
       return;
@@ -106,7 +143,9 @@ const ReportsPage = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(
+      
+      // Fetch employee details
+      const employeeResponse = await fetch(
         `http://localhost:5000/api/employees/${selectedEmployee}`,
         {
           headers: {
@@ -114,14 +153,32 @@ const ReportsPage = () => {
           },
         }
       );
-      const data = await response.json();
+      const employeeData = await employeeResponse.json();
       
-      if (data.success) {
-        const emp = data.data;
-        
-        // Fetch salary components
+      if (!employeeData.success) {
+        throw new Error('Failed to fetch employee data');
+      }
+
+      const emp = employeeData.data;
+
+      // Fetch actual payroll data for the selected month and year
+      const payrollResponse = await fetch(
+        `http://localhost:5000/api/payroll?employeeId=${selectedEmployee}&month=${selectedMonth}&year=${selectedYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const payrollData = await payrollResponse.json();
+
+      if (payrollData.success && payrollData.data.length > 0) {
+        // Get the payroll record for the selected month/year
+        const latestPayroll = payrollData.data[0];
+
+        // Fetch payroll components breakdown
         const componentsResponse = await fetch(
-          `http://localhost:5000/api/salary-components/${selectedEmployee}`,
+          `http://localhost:5000/api/payroll/${latestPayroll.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -129,47 +186,49 @@ const ReportsPage = () => {
           }
         );
         const componentsData = await componentsResponse.json();
-        
+
         const earnings: SalaryComponent[] = [];
         const deductions: SalaryComponent[] = [];
-        let grossSalary = 0;
-        let totalDeductions = 0;
 
-        if (componentsData.success && componentsData.data) {
-          componentsData.data.forEach((comp: any) => {
-            if (comp.type === 'earning') {
+        if (componentsData.success && componentsData.data.components) {
+          componentsData.data.components.forEach((comp: any) => {
+            if (comp.component_type === 'earning') {
               earnings.push({
-                name: comp.name,
+                name: comp.component_name,
                 type: 'earning',
-                amount: comp.amount,
+                amount: parseFloat(comp.amount) || 0,
               });
-              grossSalary += comp.amount;
             } else {
               deductions.push({
-                name: comp.name,
+                name: comp.component_name,
                 type: 'deduction',
-                amount: comp.amount,
+                amount: parseFloat(comp.amount) || 0,
               });
-              totalDeductions += comp.amount;
             }
           });
         }
 
+        // Use actual payroll data
         setSalaryReport({
-          employeeName: emp.fullName,
-          designation: emp.designation,
-          dateOfJoining: emp.dateOfJoining,
-          salaryEffectiveFrom: emp.salaryEffectiveFrom || emp.dateOfJoining,
+          employeeName: emp.full_name || emp.fullName,
+          designation: emp.position || emp.designation,
+          dateOfJoining: emp.join_date || emp.dateOfJoining,
+          salaryEffectiveFrom: latestPayroll.created_at || emp.join_date || emp.dateOfJoining,
           earnings,
           deductions,
-          grossSalary,
-          totalDeductions,
-          netSalary: grossSalary - totalDeductions,
+          grossSalary: parseFloat(latestPayroll.gross_salary) || 0,
+          totalDeductions: parseFloat(latestPayroll.deductions) + parseFloat(latestPayroll.provident_fund) + parseFloat(latestPayroll.professional_tax) || 0,
+          netSalary: parseFloat(latestPayroll.net_salary) || 0,
         });
+      } else {
+        // No payroll generated yet, show message
+        const monthName = months.find(m => m.value === selectedMonth)?.label || selectedMonth;
+        alert(`No payroll data found for ${emp.full_name || emp.fullName} for ${monthName} ${selectedYear}. Please generate payroll first.`);
+        setSalaryReport(null);
       }
     } catch (error) {
       console.error('Error fetching salary report:', error);
-      alert('Failed to fetch salary report');
+      alert('Failed to fetch salary report. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -185,11 +244,13 @@ const ReportsPage = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
     if (!printWindow) return;
 
+    const monthName = months.find(m => m.value === selectedMonth)?.label || '';
+
     const printContent = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Salary Statement Report</title>
+          <title>Salary Statement - ${monthName} ${selectedYear}</title>
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -289,8 +350,8 @@ const ReportsPage = () => {
         </head>
         <body>
           <div class="header">
-            <div class="company-name">[Company]</div>
-            <div class="report-title">Salary Statement Report</div>
+            <div class="company-name">WorkZen HRMS</div>
+            <div class="report-title">Salary Statement - ${monthName} ${selectedYear}</div>
           </div>
           
           <div class="employee-info">
@@ -382,8 +443,10 @@ const ReportsPage = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Reports</h1>
           <p className="text-gray-600">
-            {canViewAllReports 
+            {canGenerateReports 
               ? 'Search and generate comprehensive salary reports for all employees'
+              : canViewAllReports
+              ? 'Search employees - Report generation is restricted to Admin and Payroll Officers'
               : 'View and download your personal salary statement'
             }
           </p>
@@ -424,7 +487,7 @@ const ReportsPage = () => {
           </div>
           
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               {/* Employee Selection */}
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-2 uppercase">
@@ -450,6 +513,24 @@ const ReportsPage = () => {
                 )}
               </div>
 
+              {/* Month Selection */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2 uppercase">
+                  Select Month
+                </label>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                  className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg bg-white text-gray-900 font-medium focus:border-gray-900 focus:ring-2 focus:ring-gray-200 transition-all"
+                >
+                  {months.map((month) => (
+                    <option key={month.value} value={month.value}>
+                      {month.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Year Selection */}
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-2 uppercase">
@@ -469,16 +550,29 @@ const ReportsPage = () => {
               </div>
             </div>
 
+            {/* Access Restriction Message for HR */}
+            {!canGenerateReports && canViewAllReports && (
+              <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-yellow-800 text-sm font-medium">
+                  ⚠️ Access Restricted: Only Admin and Payroll Officers can generate salary reports.
+                </p>
+              </div>
+            )}
+
             {/* Generate Button */}
             <button
               onClick={generateReport}
-              disabled={!selectedEmployee || loading}
+              disabled={!selectedEmployee || loading || !canGenerateReports}
               className="w-full bg-gray-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-800 focus:ring-2 focus:ring-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   Generating Report...
+                </span>
+              ) : !canGenerateReports ? (
+                <span className="flex items-center justify-center gap-2">
+                  🔒 Access Restricted - Admin & Payroll Only
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
@@ -497,7 +591,9 @@ const ReportsPage = () => {
             <div className="bg-gray-900 px-6 py-4 border-b-2 border-gray-900">
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Salary Statement - {selectedYear}</h2>
+                  <h2 className="text-2xl font-bold text-white">
+                    Salary Statement - {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
+                  </h2>
                 </div>
                 <button
                   onClick={handlePrint}

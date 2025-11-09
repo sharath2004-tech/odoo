@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
-import { Briefcase, Calendar, DollarSign, Lock, Mail, MapPin, Save, User } from 'lucide-react';
+import { Briefcase, Calendar, DollarSign, Eye, FileText, Loader2, Lock, Mail, MapPin, Save, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { PayslipView } from '../components/PayslipView';
 import { SalaryInfoTab } from '../components/SalaryInfoTab';
 import { useAuth } from '../context/AuthContext';
 import { DashboardLayout } from '../layouts/DashboardLayout';
+import { payrollAPI } from '../services/api';
 
 interface EmployeeDetails {
   id: number;
@@ -16,9 +18,229 @@ interface EmployeeDetails {
   status: string;
 }
 
+interface PayrollRecord {
+  id: number;
+  month: number;
+  year: number;
+  gross_salary: number;
+  net_salary: number;
+  status: string;
+  payment_date?: string;
+  worked_days: number;
+  total_days: number;
+}
+
+interface PayslipData {
+  payroll: {
+    id: number;
+    month: number;
+    year: number;
+    employee_code: string;
+    employee_name: string;
+    position: string;
+    department: string;
+    email: string;
+    join_date: string;
+    basic_salary: number;
+    allowances: number;
+    deductions: number;
+    provident_fund: number;
+    professional_tax: number;
+    gross_salary: number;
+    net_salary: number;
+    worked_days: number;
+    total_days: number;
+    status: string;
+    payment_date: string;
+  };
+  earnings: Array<{
+    component_name: string;
+    rate_percentage: number | null;
+    amount: number;
+  }>;
+  deductions: Array<{
+    component_name: string;
+    rate_percentage: number | null;
+    amount: number;
+  }>;
+}
+
+interface PayslipTabProps {
+  employeeId: number;
+  loadingPayslip: boolean;
+  setLoadingPayslip: (loading: boolean) => void;
+  selectedPayslip: PayslipData | null;
+  setSelectedPayslip: (payslip: PayslipData | null) => void;
+  payrollHistory: PayrollRecord[];
+  setPayrollHistory: (history: PayrollRecord[]) => void;
+}
+
+const PayslipTab = ({ 
+  employeeId, 
+  loadingPayslip, 
+  setLoadingPayslip, 
+  selectedPayslip, 
+  setSelectedPayslip,
+  payrollHistory,
+  setPayrollHistory 
+}: PayslipTabProps) => {
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const fetchPayrollHistory = async () => {
+    try {
+      setLoadingHistory(true);
+      const response = await payrollAPI.getEmployeeHistory(employeeId);
+      if (response.data.success) {
+        setPayrollHistory(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching payroll history:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (employeeId && employeeId > 0) {
+      fetchPayrollHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employeeId]);
+
+  const handleViewPayslip = async (payrollId: number) => {
+    try {
+      setLoadingPayslip(true);
+      const response = await payrollAPI.getPayslip(payrollId);
+      if (response.data.success) {
+        setSelectedPayslip(response.data.data);
+      } else {
+        alert(response.data.message || 'Failed to load payslip. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error fetching payslip:', error);
+      alert('Failed to load payslip. Please try again.');
+    } finally {
+      setLoadingPayslip(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
+      paid: { bg: 'bg-green-100', text: 'text-green-700', label: 'Paid' },
+      pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pending' },
+      processing: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Processing' },
+    };
+    const config = statusConfig[status] || statusConfig.pending;
+    return (
+      <span className={`${config.bg} ${config.text} px-3 py-1 rounded-full text-xs font-semibold`}>
+        {config.label}
+      </span>
+    );
+  };
+
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  if (selectedPayslip) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-4"
+      >
+        <button
+          onClick={() => setSelectedPayslip(null)}
+          className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2 no-print"
+        >
+          ← Back to Payroll History
+        </button>
+        
+        <PayslipView payslipData={selectedPayslip} />
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-bold text-gray-900">Payroll History</h3>
+        {loadingHistory && <Loader2 className="w-5 h-5 animate-spin text-blue-600" />}
+      </div>
+
+      {loadingHistory ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      ) : payrollHistory.length === 0 ? (
+        <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-12 text-center">
+          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600 text-lg font-medium">No Payroll Records Found</p>
+          <p className="text-gray-500 text-sm mt-2">Your payroll records will appear here once processed.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {payrollHistory.map((record) => (
+            <div
+              key={record.id}
+              className="bg-white border-2 border-gray-300 rounded-lg p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="text-lg font-bold text-gray-900">
+                    {monthNames[record.month - 1]} {record.year}
+                  </h4>
+                  <p className="text-sm text-gray-500">
+                    {record.worked_days}/{record.total_days} days
+                  </p>
+                </div>
+                {getStatusBadge(record.status)}
+              </div>
+
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-600 text-sm">Gross Salary</span>
+                  <span className="font-semibold text-gray-900">₹{Number(record.gross_salary).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-900 font-bold">Net Salary</span>
+                  <span className="font-bold text-blue-600 text-lg">₹{Number(record.net_salary).toFixed(2)}</span>
+                </div>
+              </div>
+
+              {record.payment_date && (
+                <p className="text-xs text-gray-500 mb-3">
+                  Paid on: {new Date(record.payment_date).toLocaleDateString()}
+                </p>
+              )}
+
+              <button
+                onClick={() => handleViewPayslip(record.id)}
+                disabled={loadingPayslip}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loadingPayslip ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Eye size={16} />
+                    View Payslip
+                  </>
+                )}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
 export const ProfilePage = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'salary'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'salary' | 'payslip'>('profile');
   const [employeeDetails, setEmployeeDetails] = useState<EmployeeDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [passwordData, setPasswordData] = useState({
@@ -31,6 +253,9 @@ export const ProfilePage = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [payrollHistory, setPayrollHistory] = useState<PayrollRecord[]>([]);
+  const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(null);
+  const [loadingPayslip, setLoadingPayslip] = useState(false);
   
   const canViewSalaryInfo = user?.role === 'admin' || user?.role === 'payroll';
 
@@ -241,6 +466,19 @@ export const ProfilePage = () => {
                 Salary Info
               </button>
             )}
+            {user?.role !== 'admin' && (
+              <button
+                onClick={() => setActiveTab('payslip')}
+                className={`flex-1 px-6 py-4 text-sm font-semibold transition-colors ${
+                  activeTab === 'payslip'
+                    ? 'text-gray-900 border-b-2 border-gray-900 bg-gray-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <FileText size={18} className="inline mr-2" />
+                View Payslip
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('security')}
               className={`flex-1 px-6 py-4 text-sm font-semibold transition-colors ${
@@ -381,6 +619,34 @@ export const ProfilePage = () => {
                   employeeName={employeeDetails?.full_name || user?.fullName || 'Employee'}
                 />
               </motion.div>
+            ) : activeTab === 'payslip' ? (
+              employeeDetails?.id ? (
+                <PayslipTab 
+                  employeeId={employeeDetails.id}
+                  loadingPayslip={loadingPayslip}
+                  setLoadingPayslip={setLoadingPayslip}
+                  selectedPayslip={selectedPayslip}
+                  setSelectedPayslip={setSelectedPayslip}
+                  payrollHistory={payrollHistory}
+                  setPayrollHistory={setPayrollHistory}
+                />
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-center items-center py-12"
+                >
+                  <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-8 text-center max-w-md mx-auto">
+                    <FileText className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">No Employee Record</h3>
+                    <p className="text-gray-600 mb-4">
+                      {user?.role === 'admin' || user?.role === 'hr' || user?.role === 'payroll'
+                        ? 'Administrative users do not have payroll records. This feature is only available for employee accounts.'
+                        : 'You do not have an employee record associated with your account. Please contact your administrator.'}
+                    </p>
+                  </div>
+                </motion.div>
+              )
             ) : (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

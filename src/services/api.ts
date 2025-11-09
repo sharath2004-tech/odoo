@@ -43,8 +43,8 @@ export default api;
 
 // API endpoints
 export const authAPI = {
-  login: (email: string, password: string, role: string) => 
-    api.post('/auth/login', { email, password, role }),
+  login: (identifier: string, password: string, role: string) => 
+    api.post('/auth/login', { identifier, password, role }),
   
   register: (fullName: string, email: string, password: string, role: string) => 
     api.post('/auth/register', { fullName, email, password, role }),

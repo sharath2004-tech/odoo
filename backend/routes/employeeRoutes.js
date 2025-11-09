@@ -14,7 +14,7 @@ router.get('/', verifyToken, async (req, res) => {
     
     const [employees] = await pool.query(`
       SELECT 
-        e.id, e.employee_code, u.full_name, u.email, 
+        e.id, e.employee_code, u.full_name, u.email, u.role,
         d.name as department, e.position, e.join_date, 
         e.status, ${salaryField}
       FROM employees e

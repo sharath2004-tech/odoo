@@ -221,11 +221,11 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
       {/* Employee Name Header */}
 
-      <div className="bg-black border-2 border-gray-700 rounded-lg p-6 text-white">
+      <div className="bg-white border-2 border-gray-300 rounded-lg p-6 shadow-sm">
 
-        <h2 className="text-2xl font-bold">{employeeName}</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{employeeName}</h2>
 
-        <p className="text-gray-400">Salary Information</p>
+        <p className="text-gray-600">Salary Information</p>
 
       </div>
 
@@ -233,9 +233,9 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        <div className="bg-black border-2 border-gray-700 rounded-lg p-6">
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 shadow-sm">
 
-          <p className="text-sm text-gray-400 mb-2">Month Wage</p>
+          <p className="text-sm text-gray-600 mb-2">Month Wage</p>
 
           {editMode ? (
 
@@ -247,13 +247,13 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
               onChange={(e) => setSalaryInfo({ ...salaryInfo, monthlyWage: parseFloat(e.target.value) || 0 })}
 
-              className="w-full text-3xl font-bold text-white bg-black border-b-2 border-gray-600 focus:border-blue-500 outline-none"
+              className="w-full text-3xl font-bold text-gray-900 bg-white border-b-2 border-gray-400 focus:border-blue-500 outline-none"
 
             />
 
           ) : (
 
-            <p className="text-3xl font-bold text-white">₹ {salaryInfo.monthlyWage.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-gray-900">₹ {salaryInfo.monthlyWage.toLocaleString()}</p>
 
           )}
 
@@ -261,11 +261,11 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
         </div>
 
-        <div className="bg-black border-2 border-gray-700 rounded-lg p-6">
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 shadow-sm">
 
-          <p className="text-sm text-gray-400 mb-2">Yearly Wage</p>
+          <p className="text-sm text-gray-600 mb-2">Yearly Wage</p>
 
-          <p className="text-3xl font-bold text-white">₹ {yearlyWage.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-gray-900">₹ {yearlyWage.toLocaleString()}</p>
 
           <p className="text-sm text-gray-500 mt-1">/ Yearly</p>
 
@@ -335,9 +335,9 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
       {/* Salary Components */}
 
-      <div className="bg-black border-2 border-gray-700 rounded-lg overflow-hidden">
+      <div className="bg-white border-2 border-gray-300 rounded-lg overflow-hidden shadow-sm">
 
-        <div className="bg-gray-900 text-white px-6 py-4 border-b border-gray-700">
+        <div className="bg-gray-100 text-gray-900 px-6 py-4 border-b border-gray-300">
 
           <h3 className="text-xl font-bold">Salary Components</h3>
 
@@ -347,23 +347,23 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           {/* Basic Salary */}
 
-          <div className="flex items-center justify-between pb-4 border-b border-gray-700">
+          <div className="flex items-center justify-between pb-4 border-b border-gray-300">
 
             <div className="flex-1">
 
-              <p className="font-semibold text-white text-lg">Basic Salary</p>
+              <p className="font-semibold text-gray-900 text-lg">Basic Salary</p>
 
-              <p className="text-sm text-gray-400">Define Basic salary from company cost, computed based on monthly wages</p>
+              <p className="text-sm text-gray-600">Define Basic salary from company cost, computed based on monthly wages</p>
 
             </div>
 
             <div className="text-right">
 
-              <p className="text-2xl font-bold text-white">₹ {basicSalary.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-gray-900">₹ {basicSalary.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
               <p className="text-sm text-gray-500">/ month</p>
 
-              <p className="text-sm font-medium text-blue-400">50.00%</p>
+              <p className="text-sm font-medium text-blue-600">50.00%</p>
 
             </div>
 
@@ -371,23 +371,23 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           {/* HRA */}
 
-          <div className="flex items-center justify-between pb-4 border-b border-gray-700">
+          <div className="flex items-center justify-between pb-4 border-b border-gray-300">
 
             <div className="flex-1">
 
-              <p className="font-semibold text-white text-lg">House Rent Allowance</p>
+              <p className="font-semibold text-gray-900 text-lg">House Rent Allowance</p>
 
-              <p className="text-sm text-gray-400">HRA provided to employees, 50% of the basic salary</p>
+              <p className="text-sm text-gray-600">HRA provided to employees, 50% of the basic salary</p>
 
             </div>
 
             <div className="text-right">
 
-              <p className="text-2xl font-bold text-white">₹ {hra.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-gray-900">₹ {hra.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
               <p className="text-sm text-gray-500">/ month</p>
 
-              <p className="text-sm font-medium text-blue-400">50.00%</p>
+              <p className="text-sm font-medium text-blue-600">50.00%</p>
 
             </div>
 
@@ -395,23 +395,23 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           {/* Standard Allowance */}
 
-          <div className="flex items-center justify-between pb-4 border-b border-gray-700">
+          <div className="flex items-center justify-between pb-4 border-b border-gray-300">
 
             <div className="flex-1">
 
-              <p className="font-semibold text-white text-lg">Standard Allowance</p>
+              <p className="font-semibold text-gray-900 text-lg">Standard Allowance</p>
 
-              <p className="text-sm text-gray-400">A standard allowance is a predetermined, fixed amount provided to employee as part of their salary</p>
+              <p className="text-sm text-gray-600">A standard allowance is a predetermined, fixed amount provided to employee as part of their salary</p>
 
             </div>
 
             <div className="text-right">
 
-              <p className="text-2xl font-bold text-white">₹ {standardAllowance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-gray-900">₹ {standardAllowance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
               <p className="text-sm text-gray-500">/ month</p>
 
-              <p className="text-sm font-medium text-blue-400">8.33%</p>
+              <p className="text-sm font-medium text-blue-600">8.33%</p>
 
             </div>
 
@@ -419,23 +419,23 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           {/* Performance Bonus */}
 
-          <div className="flex items-center justify-between pb-4 border-b border-gray-700">
+          <div className="flex items-center justify-between pb-4 border-b border-gray-300">
 
             <div className="flex-1">
 
-              <p className="font-semibold text-white text-lg">Performance Bonus</p>
+              <p className="font-semibold text-gray-900 text-lg">Performance Bonus</p>
 
-              <p className="text-sm text-gray-400">Variable amount paid during payroll. The value defined by the company and calculated as a % of the basic salary</p>
+              <p className="text-sm text-gray-600">Variable amount paid during payroll. The value defined by the company and calculated as a % of the basic salary</p>
 
             </div>
 
             <div className="text-right">
 
-              <p className="text-2xl font-bold text-white">₹ {performanceBonus.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-gray-900">₹ {performanceBonus.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
               <p className="text-sm text-gray-500">/ month</p>
 
-              <p className="text-sm font-medium text-blue-400">16.67%</p>
+              <p className="text-sm font-medium text-blue-600">16.67%</p>
 
             </div>
 
@@ -443,23 +443,23 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           {/* LTA */}
 
-          <div className="flex items-center justify-between pb-4 border-b border-gray-700">
+          <div className="flex items-center justify-between pb-4 border-b border-gray-300">
 
             <div className="flex-1">
 
-              <p className="font-semibold text-white text-lg">Leave Travel Allowance</p>
+              <p className="font-semibold text-gray-900 text-lg">Leave Travel Allowance</p>
 
-              <p className="text-sm text-gray-400">LTA is paid by the company to employees to cover their travel expenses, calculated as a % of the basic salary</p>
+              <p className="text-sm text-gray-600">LTA is paid by the company to employees to cover their travel expenses, calculated as a % of the basic salary</p>
 
             </div>
 
             <div className="text-right">
 
-              <p className="text-2xl font-bold text-white">₹ {lta.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-gray-900">₹ {lta.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
               <p className="text-sm text-gray-500">/ month</p>
 
-              <p className="text-sm font-medium text-blue-400">8.33%</p>
+              <p className="text-sm font-medium text-blue-600">8.33%</p>
 
             </div>
 
@@ -467,23 +467,23 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           {/* Fixed Allowance */}
 
-          <div className="flex items-center justify-between pb-4 border-b border-gray-700">
+          <div className="flex items-center justify-between pb-4 border-b border-gray-300">
 
             <div className="flex-1">
 
-              <p className="font-semibold text-white text-lg">Fixed Allowance</p>
+              <p className="font-semibold text-gray-900 text-lg">Fixed Allowance</p>
 
-              <p className="text-sm text-gray-400">Fixed allowance portion of wages is determined after calculating all salary components</p>
+              <p className="text-sm text-gray-600">Fixed allowance portion of wages is determined after calculating all salary components</p>
 
             </div>
 
             <div className="text-right">
 
-              <p className="text-2xl font-bold text-white">₹ {fixedAllowance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-gray-900">₹ {fixedAllowance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
               <p className="text-sm text-gray-500">/ month</p>
 
-              <p className="text-sm font-medium text-blue-400">11.67%</p>
+              <p className="text-sm font-medium text-blue-600">11.67%</p>
 
             </div>
 
@@ -491,11 +491,11 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           {/* Gross Salary Total */}
 
-          <div className="flex items-center justify-between pt-4 bg-gray-900 px-4 py-3 rounded-lg border border-gray-700">
+          <div className="flex items-center justify-between pt-4 bg-green-50 px-4 py-3 rounded-lg border-2 border-green-500">
 
-            <p className="text-xl font-bold text-white">Gross Salary</p>
+            <p className="text-xl font-bold text-gray-900">Gross Salary</p>
 
-            <p className="text-3xl font-bold text-green-400">₹ {grossSalary.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="text-3xl font-bold text-green-600">₹ {grossSalary.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
           </div>
 
@@ -507,9 +507,9 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        <div className="bg-black border-2 border-gray-700 rounded-lg p-6">
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 shadow-sm">
 
-          <p className="text-sm text-gray-400 mb-2">No of working days in a week</p>
+          <p className="text-sm text-gray-600 mb-2">No of working days in a week</p>
 
           {editMode ? (
 
@@ -525,21 +525,21 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
               onChange={(e) => setSalaryInfo({ ...salaryInfo, workingDaysPerWeek: parseInt(e.target.value) || 5 })}
 
-              className="w-full text-2xl font-bold text-white bg-black border-b-2 border-gray-600 focus:border-blue-500 outline-none"
+              className="w-full text-2xl font-bold text-gray-900 bg-white border-b-2 border-gray-400 focus:border-blue-500 outline-none"
 
             />
 
           ) : (
 
-            <p className="text-2xl font-bold text-white">{salaryInfo.workingDaysPerWeek} days</p>
+            <p className="text-2xl font-bold text-gray-900">{salaryInfo.workingDaysPerWeek} days</p>
 
           )}
 
         </div>
 
-        <div className="bg-black border-2 border-gray-700 rounded-lg p-6">
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 shadow-sm">
 
-          <p className="text-sm text-gray-400 mb-2">Break Time</p>
+          <p className="text-sm text-gray-600 mb-2">Break Time</p>
 
           {editMode ? (
 
@@ -555,13 +555,13 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
               onChange={(e) => setSalaryInfo({ ...salaryInfo, breakTimeHours: parseFloat(e.target.value) || 0 })}
 
-              className="w-full text-2xl font-bold text-white bg-black border-b-2 border-gray-600 focus:border-blue-500 outline-none"
+              className="w-full text-2xl font-bold text-gray-900 bg-white border-b-2 border-gray-400 focus:border-blue-500 outline-none"
 
             />
 
           ) : (
 
-            <p className="text-2xl font-bold text-white">{salaryInfo.breakTimeHours} hrs</p>
+            <p className="text-2xl font-bold text-gray-900">{salaryInfo.breakTimeHours} hrs</p>
 
           )}
 
@@ -571,9 +571,9 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
       {/* Deductions Section */}
 
-      <div className="bg-black border-2 border-gray-700 rounded-lg overflow-hidden">
+      <div className="bg-white border-2 border-gray-300 rounded-lg overflow-hidden shadow-sm">
 
-        <div className="bg-gray-900 text-white px-6 py-4 border-b border-gray-700">
+        <div className="bg-gray-100 text-gray-900 px-6 py-4 border-b border-gray-300">
 
           <h3 className="text-xl font-bold">Deductions</h3>
 
@@ -583,51 +583,51 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           {/* PF Contribution */}
 
-          <div className="bg-gray-900 border border-gray-700 rounded-lg p-4">
+          <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
 
-            <p className="font-bold text-white text-lg mb-3">Provident Fund (PF) Contribution</p>
+            <p className="font-bold text-gray-900 text-lg mb-3">Provident Fund (PF) Contribution</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-              <div className="flex items-center justify-between pb-3 border-b border-gray-700">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-300">
 
                 <div>
 
-                  <p className="font-semibold text-white">Employee</p>
+                  <p className="font-semibold text-gray-900">Employee</p>
 
-                  <p className="text-sm text-gray-400">PF is calculated based on the basic salary</p>
+                  <p className="text-sm text-gray-600">PF is calculated based on the basic salary</p>
 
                 </div>
 
                 <div className="text-right">
 
-                  <p className="text-xl font-bold text-red-400">₹ {employeePF.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="text-xl font-bold text-red-600">₹ {employeePF.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
                   <p className="text-sm text-gray-500">/ month</p>
 
-                  <p className="text-sm font-medium text-blue-400">12.00%</p>
+                  <p className="text-sm font-medium text-blue-600">12.00%</p>
 
                 </div>
 
               </div>
 
-              <div className="flex items-center justify-between pb-3 border-b border-gray-700">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-300">
 
                 <div>
 
-                  <p className="font-semibold text-white">Employer</p>
+                  <p className="font-semibold text-gray-900">Employer</p>
 
-                  <p className="text-sm text-gray-400">PF is calculated based on the basic salary</p>
+                  <p className="text-sm text-gray-600">PF is calculated based on the basic salary</p>
 
                 </div>
 
                 <div className="text-right">
 
-                  <p className="text-xl font-bold text-white">₹ {employerPF.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="text-xl font-bold text-gray-900">₹ {employerPF.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
                   <p className="text-sm text-gray-500">/ month</p>
 
-                  <p className="text-sm font-medium text-blue-400">12.00%</p>
+                  <p className="text-sm font-medium text-blue-600">12.00%</p>
 
                 </div>
 
@@ -641,21 +641,21 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           <div>
 
-            <p className="font-bold text-white text-lg mb-3">Tax Deductions</p>
+            <p className="font-bold text-gray-900 text-lg mb-3">Tax Deductions</p>
 
-            <div className="flex items-center justify-between pb-4 border-b border-gray-700">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-300">
 
               <div className="flex-1">
 
-                <p className="font-semibold text-white">Professional Tax</p>
+                <p className="font-semibold text-gray-900">Professional Tax</p>
 
-                <p className="text-sm text-gray-400">Professional Tax deducted from the Gross salary</p>
+                <p className="text-sm text-gray-600">Professional Tax deducted from the Gross salary</p>
 
               </div>
 
               <div className="text-right">
 
-                <p className="text-2xl font-bold text-red-400">₹ {professionalTax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-bold text-red-600">₹ {professionalTax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
                 <p className="text-sm text-gray-500">/ month</p>
 
@@ -667,11 +667,11 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
           {/* Total Deductions */}
 
-          <div className="flex items-center justify-between pt-4 bg-gray-900 px-4 py-3 rounded-lg border border-gray-700">
+          <div className="flex items-center justify-between pt-4 bg-red-50 px-4 py-3 rounded-lg border-2 border-red-500">
 
-            <p className="text-xl font-bold text-white">Total Deductions</p>
+            <p className="text-xl font-bold text-gray-900">Total Deductions</p>
 
-            <p className="text-3xl font-bold text-red-400">₹ {totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="text-3xl font-bold text-red-600">₹ {totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
           </div>
 
@@ -681,19 +681,19 @@ export const SalaryInfoTab = ({ employeeId, employeeName }: Props) => {
 
       {/* Net Salary */}
 
-      <div className="bg-black border-2 border-green-500 rounded-lg p-8 text-white">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-500 rounded-lg p-8 shadow-lg">
 
         <div className="flex items-center justify-between">
 
           <div>
 
-            <p className="text-lg text-gray-300">Net Payable Salary</p>
+            <p className="text-lg text-gray-700 font-semibold">Net Payable Salary</p>
 
-            <p className="text-sm text-gray-400">Gross Salary - Total Deductions</p>
+            <p className="text-sm text-gray-600">Gross Salary - Total Deductions</p>
 
           </div>
 
-          <p className="text-4xl font-bold text-green-400">₹ {netSalary.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-4xl font-bold text-green-600">₹ {netSalary.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
 
         </div>
 

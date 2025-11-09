@@ -9,7 +9,7 @@ export const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: '',
     role: 'employee' as UserRole,
   });
@@ -26,7 +26,7 @@ export const LoginPage = () => {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.email.includes('@')) newErrors.email = 'Valid email is required';
+    if (!formData.identifier) newErrors.identifier = 'Email or Login ID is required';
     if (!formData.password) newErrors.password = 'Password is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -37,7 +37,7 @@ export const LoginPage = () => {
     if (validateForm()) {
       try {
         setIsLoading(true);
-        await login(formData.email, formData.password, formData.role);
+        await login(formData.identifier, formData.password, formData.role);
         // Navigate to dashboard - DashboardRouter will handle role-based routing
         navigate('/dashboard');
       } catch (error: unknown) {
@@ -79,22 +79,22 @@ export const LoginPage = () => {
               </div>
             )}
 
-            {/* Email */}
+            {/* Email or Login ID */}
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-2">Email Address</label>
+              <label className="block text-gray-700 text-sm font-medium mb-2">Email or Login ID</label>
               <div className="relative">
                 <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="your.email@example.com"
-                  value={formData.email}
+                  type="text"
+                  name="identifier"
+                  placeholder="your.email@example.com or login ID"
+                  value={formData.identifier}
                   onChange={handleChange}
                   className="w-full bg-white border border-gray-300 rounded-lg px-10 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
                   required
                 />
               </div>
-              {errors.email && <p className="text-red-600 text-xs mt-1">{errors.email}</p>}
+              {errors.identifier && <p className="text-red-600 text-xs mt-1">{errors.identifier}</p>}
             </div>
 
             {/* Password */}

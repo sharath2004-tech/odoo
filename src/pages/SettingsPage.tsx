@@ -18,7 +18,6 @@ interface UserAccessRights {
 }
 
 const SettingsPage = () => {
-  const [companyName, setCompanyName] = useState('');
   const [users, setUsers] = useState<UserAccessRights[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -139,38 +138,6 @@ const SettingsPage = () => {
   return (
     <DashboardLayout title="Settings">
       <div className="space-y-6">
-        {/* Company Logo/Name Section */}
-        <motion.div
-          className="bg-white border-2 border-gray-900 rounded-lg p-6 shadow-md"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b-2 border-gray-900 pb-2">
-            Company Branding
-          </h2>
-          <div className="space-y-4">
-            <div className="flex items-center gap-6">
-              <div className="flex-shrink-0">
-                <img 
-                  src="/images/workzen-logo.svg" 
-                  alt="WorkZen Logo" 
-                  className="w-20 h-20 border-2 border-gray-200 rounded-lg p-2 bg-gray-50"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Enter company name"
-                  className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg bg-white text-gray-900 font-medium focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
-                />
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
         {/* User Settings Section */}
         <motion.div
           className="bg-white border-2 border-gray-900 rounded-lg shadow-md overflow-hidden"

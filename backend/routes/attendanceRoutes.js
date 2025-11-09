@@ -45,7 +45,71 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// Mark attendance (check-in/check-out)
+// Check-in endpoint
+router.post('/checkin', verifyToken, async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const checkInTime = new Date().toTimeString().split(' ')[0]; // HH:MM:SS
+    
+    // Get employee record from user_id
+    const [employees] = await pool.query('SELECT id FROM employees WHERE user_id = ?', [req.user.id]);
+    
+    if (employees.length === 0) {
+      return res.status(404).json({ success: false, message: 'Employee record not found' });
+    }
+    
+    const empId = employees[0].id;
+
+    // Check if already checked in today
+    const [existing] = await pool.query(
+      'SELECT id, check_in FROM attendance WHERE employee_id = ? AND date = ?',
+      [empId, today]
+    );
+
+    if (existing.length > 0 && existing[0].check_in) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Already checked in today',
+        data: { check_in: existing[0].check_in }
+      });
+    }
+
+    // Create new check-in record
+    const [result] = await pool.query(
+      'INSERT INTO attendance (employee_id, date, check_in, status) VALUES (?, ?, ?, ?)',
+      [empId, today, checkInTime, 'present']
+    );
+
+    // Log activity
+    await pool.query(
+      `INSERT INTO activity_logs (user_id, user_name, user_role, action, module, details)
+      VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        req.user.id,
+        req.user.fullName || req.user.full_name || req.user.name || req.user.email,
+        req.user.role,
+        'CHECK_IN',
+        'Attendance',
+        `Checked in at ${checkInTime}`
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Check-in successful',
+      data: {
+        id: result.insertId,
+        check_in: checkInTime,
+        date: today
+      }
+    });
+  } catch (error) {
+    console.error('Check-in error:', error);
+    res.status(500).json({ success: false, message: 'Failed to check in' });
+  }
+});
+
+// Mark attendance (check-in/check-out) - Admin/HR use
 router.post('/', verifyToken, async (req, res) => {
   try {
     const { employeeId, date, checkIn, checkOut, status, notes } = req.body;
@@ -97,7 +161,7 @@ router.post('/', verifyToken, async (req, res) => {
 // Check-out endpoint
 router.patch('/checkout', verifyToken, async (req, res) => {
   try {
-    const { checkOut } = req.body;
+    const checkOutTime = new Date().toTimeString().split(' ')[0]; // HH:MM:SS
     const today = new Date().toISOString().split('T')[0];
     
     // Get employee record from user_id
@@ -109,23 +173,105 @@ router.patch('/checkout', verifyToken, async (req, res) => {
     
     const empId = employees[0].id;
 
-    // Update today's attendance
-    const [result] = await pool.query(
-      'UPDATE attendance SET check_out = ? WHERE employee_id = ? AND date = ?',
-      [checkOut, empId, today]
+    // Check if already checked in
+    const [existing] = await pool.query(
+      'SELECT id, check_in, check_out FROM attendance WHERE employee_id = ? AND date = ?',
+      [empId, today]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'No check-in found for today' });
+    if (existing.length === 0 || !existing[0].check_in) {
+      return res.status(400).json({ success: false, message: 'No check-in found for today. Please check in first.' });
     }
+
+    if (existing[0].check_out) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Already checked out today',
+        data: { check_out: existing[0].check_out }
+      });
+    }
+
+    // Update today's attendance
+    await pool.query(
+      'UPDATE attendance SET check_out = ? WHERE employee_id = ? AND date = ?',
+      [checkOutTime, empId, today]
+    );
+
+    // Log activity
+    await pool.query(
+      `INSERT INTO activity_logs (user_id, user_name, user_role, action, module, details)
+      VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        req.user.id,
+        req.user.fullName || req.user.full_name || req.user.name || req.user.email,
+        req.user.role,
+        'CHECK_OUT',
+        'Attendance',
+        `Checked out at ${checkOutTime}`
+      ]
+    );
 
     res.json({
       success: true,
-      message: 'Check-out successful'
+      message: 'Check-out successful',
+      data: {
+        check_out: checkOutTime,
+        date: today
+      }
     });
   } catch (error) {
     console.error('Check-out error:', error);
     res.status(500).json({ success: false, message: 'Failed to check out' });
+  }
+});
+
+// Get today's attendance status for current user
+router.get('/today', verifyToken, async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Get employee record from user_id
+    const [employees] = await pool.query('SELECT id FROM employees WHERE user_id = ?', [req.user.id]);
+    
+    if (employees.length === 0) {
+      return res.status(404).json({ success: false, message: 'Employee record not found' });
+    }
+    
+    const empId = employees[0].id;
+
+    // Get today's attendance
+    const [attendance] = await pool.query(
+      'SELECT id, employee_id, date, check_in, check_out, status FROM attendance WHERE employee_id = ? AND date = ?',
+      [empId, today]
+    );
+
+    if (attendance.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          hasCheckedIn: false,
+          hasCheckedOut: false,
+          check_in: null,
+          check_out: null,
+          date: today
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        hasCheckedIn: !!attendance[0].check_in,
+        hasCheckedOut: !!attendance[0].check_out,
+        check_in: attendance[0].check_in,
+        check_out: attendance[0].check_out,
+        status: attendance[0].status,
+        date: today
+      }
+    });
+  } catch (error) {
+    console.error('Get today attendance error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch today\'s attendance' });
   }
 });
 

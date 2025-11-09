@@ -129,6 +129,26 @@ export const LeaveManagementPage = () => {
       filtered = filtered.filter(leave => leave.status === statusFilter);
     }
 
+    // Sort by status priority: pending first, then approved, then rejected
+    // Within each status group, sort by date (newest first)
+    filtered.sort((a, b) => {
+      const statusPriority: { [key: string]: number } = {
+        'pending': 1,
+        'approved': 2,
+        'rejected': 3
+      };
+      
+      const priorityA = statusPriority[a.status] || 4;
+      const priorityB = statusPriority[b.status] || 4;
+      
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      
+      // If same status, sort by date (newest first)
+      return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+    });
+
     setFilteredLeaves(filtered);
   };
 

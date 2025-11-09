@@ -171,6 +171,105 @@ const PayrollPage = () => {
     }
   };
 
+  // Print payslip
+  const handlePrintPayslip = () => {
+    if (!selectedPayslip) return;
+    
+    const newWindow = window.open('', '_blank');
+    if (!newWindow) return;
+
+    const totalDeductions = selectedPayslip.payroll.deductions + selectedPayslip.payroll.provident_fund + selectedPayslip.payroll.professional_tax;
+    
+    newWindow.document.write(`
+      <html>
+        <head>
+          <title>Payslip - ${selectedPayslip.payroll.employee_name}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #06b6d4; padding-bottom: 20px; }
+            .header h1 { color: #06b6d4; margin: 0; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+            .info-section h3 { font-size: 14px; color: #666; text-transform: uppercase; margin-bottom: 10px; }
+            .info-item { margin-bottom: 8px; }
+            .label { color: #666; font-size: 14px; }
+            .value { font-weight: bold; margin-left: 10px; }
+            .earnings-deductions { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0; }
+            .section { border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+            .section h3 { margin-top: 0; border-bottom: 2px solid; padding-bottom: 10px; }
+            .earnings h3 { color: #10b981; border-color: #10b981; }
+            .deductions h3 { color: #ef4444; border-color: #ef4444; }
+            .line-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
+            .line-item.total { border-top: 2px solid #ddd; padding-top: 10px; margin-top: 10px; font-weight: bold; }
+            .net-pay { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 20px; border-radius: 10px; margin-top: 20px; }
+            .net-pay .amount { font-size: 32px; font-weight: bold; margin-top: 10px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>PAYSLIP</h1>
+            <p>${monthNames[selectedPayslip.payroll.month - 1]} ${selectedPayslip.payroll.year}</p>
+            <p>Payslip ID: #${selectedPayslip.payroll.id}</p>
+          </div>
+          <div class="info-grid">
+            <div class="info-section">
+              <h3>Employee Information</h3>
+              <div class="info-item"><span class="label">Name:</span><span class="value">${selectedPayslip.payroll.employee_name}</span></div>
+              <div class="info-item"><span class="label">Code:</span><span class="value">${selectedPayslip.payroll.employee_code}</span></div>
+              <div class="info-item"><span class="label">Position:</span><span class="value">${selectedPayslip.payroll.position}</span></div>
+              <div class="info-item"><span class="label">Department:</span><span class="value">${selectedPayslip.payroll.department}</span></div>
+            </div>
+            <div class="info-section">
+              <h3>Payment Details</h3>
+              <div class="info-item"><span class="label">Pay Period:</span><span class="value">${monthNames[selectedPayslip.payroll.month - 1]} ${selectedPayslip.payroll.year}</span></div>
+              <div class="info-item"><span class="label">Days Worked:</span><span class="value">${selectedPayslip.payroll.worked_days} / ${selectedPayslip.payroll.total_days}</span></div>
+              <div class="info-item"><span class="label">Payment Date:</span><span class="value">${selectedPayslip.payroll.payment_date || 'Pending'}</span></div>
+              <div class="info-item"><span class="label">Status:</span><span class="value">${selectedPayslip.payroll.status.toUpperCase()}</span></div>
+            </div>
+          </div>
+          <div class="earnings-deductions">
+            <div class="section earnings">
+              <h3>EARNINGS</h3>
+              ${selectedPayslip.earnings.map(e => `
+                <div class="line-item">
+                  <span>${e.component_name}${e.rate_percentage ? ' (' + e.rate_percentage + '%)' : ''}</span>
+                  <span>₹${e.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+              `).join('')}
+              <div class="line-item total">
+                <span>GROSS EARNINGS</span>
+                <span>₹${selectedPayslip.payroll.gross_salary.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+            <div class="section deductions">
+              <h3>DEDUCTIONS</h3>
+              ${selectedPayslip.deductions.map(d => `
+                <div class="line-item">
+                  <span>${d.component_name}${d.rate_percentage ? ' (' + d.rate_percentage + '%)' : ''}</span>
+                  <span>₹${d.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+              `).join('')}
+              <div class="line-item total">
+                <span>TOTAL DEDUCTIONS</span>
+                <span>₹${totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </div>
+          <div class="net-pay">
+            <div>NET PAYABLE</div>
+            <div class="amount">₹${selectedPayslip.payroll.net_salary.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+            <div style="margin-top: 10px; font-size: 14px; opacity: 0.9;">Gross - Deductions</div>
+          </div>
+        </body>
+      </html>
+    `);
+    
+    newWindow.document.close();
+    setTimeout(() => {
+      newWindow.print();
+    }, 250);
+  };
+
   if (loading) {
     return (
       <DashboardLayout title="Payroll Management">
@@ -557,7 +656,7 @@ const PayrollPage = () => {
                     <div className="flex justify-between items-center pt-3 border-t-2 border-red-200">
                       <p className="font-bold text-gray-800">TOTAL DEDUCTIONS</p>
                       <p className="font-bold text-red-600 text-lg">
-                        ₹{selectedPayslip.payroll.deductions.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        ₹{(selectedPayslip.payroll.deductions + selectedPayslip.payroll.provident_fund + selectedPayslip.payroll.professional_tax).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                   </div>
@@ -591,102 +690,7 @@ const PayrollPage = () => {
                   Close
                 </button>
                 <button
-                  onClick={() => {
-                    const printContent = document.getElementById('payslip-content');
-                    if (printContent) {
-                      const newWindow = window.open('', '_blank');
-                      if (newWindow) {
-                        newWindow.document.write(`
-                          <html>
-                            <head>
-                              <title>Payslip - ${selectedPayslip.payroll.employee_name}</title>
-                              <style>
-                                body { font-family: Arial, sans-serif; padding: 20px; }
-                                .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #06b6d4; padding-bottom: 20px; }
-                                .header h1 { color: #06b6d4; margin: 0; }
-                                .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-                                .info-section h3 { font-size: 14px; color: #666; text-transform: uppercase; margin-bottom: 10px; }
-                                .info-item { margin-bottom: 8px; }
-                                .label { color: #666; font-size: 14px; }
-                                .value { font-weight: bold; margin-left: 10px; }
-                                .earnings-deductions { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0; }
-                                .section { border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
-                                .section h3 { margin-top: 0; border-bottom: 2px solid; padding-bottom: 10px; }
-                                .earnings h3 { color: #10b981; border-color: #10b981; }
-                                .deductions h3 { color: #ef4444; border-color: #ef4444; }
-                                .line-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
-                                .line-item.total { border-top: 2px solid #ddd; padding-top: 10px; margin-top: 10px; font-weight: bold; }
-                                .net-pay { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 20px; border-radius: 10px; margin-top: 20px; }
-                                .net-pay .amount { font-size: 32px; font-weight: bold; margin-top: 10px; }
-                                @media print { body { padding: 0; } }
-                              </style>
-                            </head>
-                            <body>
-                              <div class="header">
-                                <h1>PAYSLIP</h1>
-                                <p>${monthNames[selectedPayslip.payroll.month - 1]} ${selectedPayslip.payroll.year}</p>
-                                <p>Payslip ID: #${selectedPayslip.payroll.id}</p>
-                              </div>
-                              <div class="info-grid">
-                                <div class="info-section">
-                                  <h3>Employee Information</h3>
-                                  <div class="info-item"><span class="label">Name:</span><span class="value">${selectedPayslip.payroll.employee_name}</span></div>
-                                  <div class="info-item"><span class="label">Code:</span><span class="value">${selectedPayslip.payroll.employee_code}</span></div>
-                                  <div class="info-item"><span class="label">Position:</span><span class="value">${selectedPayslip.payroll.position}</span></div>
-                                  <div class="info-item"><span class="label">Department:</span><span class="value">${selectedPayslip.payroll.department}</span></div>
-                                </div>
-                                <div class="info-section">
-                                  <h3>Payment Details</h3>
-                                  <div class="info-item"><span class="label">Pay Period:</span><span class="value">${monthNames[selectedPayslip.payroll.month - 1]} ${selectedPayslip.payroll.year}</span></div>
-                                  <div class="info-item"><span class="label">Days Worked:</span><span class="value">${selectedPayslip.payroll.worked_days} / ${selectedPayslip.payroll.total_days}</span></div>
-                                  <div class="info-item"><span class="label">Payment Date:</span><span class="value">${selectedPayslip.payroll.payment_date || 'Pending'}</span></div>
-                                  <div class="info-item"><span class="label">Status:</span><span class="value">${selectedPayslip.payroll.status.toUpperCase()}</span></div>
-                                </div>
-                              </div>
-                              <div class="earnings-deductions">
-                                <div class="section earnings">
-                                  <h3>EARNINGS</h3>
-                                  ${selectedPayslip.earnings.map(e => `
-                                    <div class="line-item">
-                                      <span>${e.component_name}${e.rate_percentage ? ' (' + e.rate_percentage + '%)' : ''}</span>
-                                      <span>₹${e.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                    </div>
-                                  `).join('')}
-                                  <div class="line-item total">
-                                    <span>GROSS EARNINGS</span>
-                                    <span>₹${selectedPayslip.payroll.gross_salary.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                  </div>
-                                </div>
-                                <div class="section deductions">
-                                  <h3>DEDUCTIONS</h3>
-                                  ${selectedPayslip.deductions.map(d => `
-                                    <div class="line-item">
-                                      <span>${d.component_name}${d.rate_percentage ? ' (' + d.rate_percentage + '%)' : ''}</span>
-                                      <span>₹${d.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                    </div>
-                                  `).join('')}
-                                  <div class="line-item total">
-                                    <span>TOTAL DEDUCTIONS</span>
-                                    <span>₹${selectedPayslip.payroll.deductions.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="net-pay">
-                                <div>NET PAYABLE</div>
-                                <div class="amount">₹${selectedPayslip.payroll.net_salary.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                                <div style="margin-top: 10px; font-size: 14px; opacity: 0.9;">Gross - Deductions</div>
-                              </div>
-                            </body>
-                          </html>
-                        `);
-                        newWindow.document.close();
-                        setTimeout(() => {
-                          newWindow.print();
-                          newWindow.close();
-                        }, 250);
-                      }
-                    }
-                  }}
+                  onClick={handlePrintPayslip}
                   className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-lg font-semibold transition-all flex items-center gap-2"
                 >
                   <Download size={16} />

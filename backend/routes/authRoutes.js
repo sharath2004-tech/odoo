@@ -66,6 +66,14 @@ router.post('/register', [
     const user = users[0];
     const token = generateToken(user);
 
+    // Set JWT in HttpOnly cookie for security
+    res.cookie('token', token, {
+      httpOnly: true,  // Prevents JavaScript access (XSS protection)
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+      sameSite: 'strict', // CSRF protection
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -76,7 +84,7 @@ router.post('/register', [
           email: user.email,
           role: user.role
         },
-        token
+        token // Still send in response for backward compatibility
       }
     });
   } catch (error) {
@@ -87,7 +95,7 @@ router.post('/register', [
 
 // Login user
 router.post('/login', [
-  body('email').isEmail().withMessage('Valid email is required'),
+  body('identifier').notEmpty().withMessage('Email or Login ID is required'),
   body('password').notEmpty().withMessage('Password is required'),
   body('role').isIn(['admin', 'hr', 'employee', 'payroll']).withMessage('Invalid role')
 ], async (req, res) => {
@@ -97,12 +105,12 @@ router.post('/login', [
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { email, password, role } = req.body;
+    const { identifier, password, role } = req.body;
 
-    // Find user
+    // Find user by email OR login_id
     const [users] = await pool.query(
-      'SELECT id, full_name, email, password, role, status FROM users WHERE email = ?',
-      [email]
+      'SELECT id, full_name, email, password, role, status FROM users WHERE email = ? OR login_id = ?',
+      [identifier, identifier]
     );
 
     if (users.length === 0) {
@@ -129,6 +137,14 @@ router.post('/login', [
 
     const token = generateToken(user);
 
+    // Set JWT in HttpOnly cookie for security
+    res.cookie('token', token, {
+      httpOnly: true,  // Prevents JavaScript access (XSS protection)
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+      sameSite: 'strict', // CSRF protection
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -139,13 +155,27 @@ router.post('/login', [
           email: user.email,
           role: user.role
         },
-        token
+        token // Still send in response for backward compatibility
       }
     });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Login failed' });
   }
+});
+
+// Logout user (clear cookie)
+router.post('/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  });
+  
+  res.json({
+    success: true,
+    message: 'Logged out successfully'
+  });
 });
 
 // Change password (authenticated users)
